@@ -263,8 +263,7 @@ def run_dcm4che():
     if IS_DCM4CHE_NOT_RUNNING:
         IS_DCM4CHE_NOT_RUNNING = False   
         logging.info('Starting DCM4CHE..')
-        subprocess.call("{0}/storescp --accept-unknown --directory {1} --filepath {2} -b {3} > nohup.out &".
-                        format(DCM4CHE_BIN, STORAGE_FOLDER, FILE_PATH, QUERY_AET), shell=True)
+        subprocess.call([f"{DCM4CHE_BIN}/storescp", "--accept-unknown", "--directory", STORAGE_FOLDER, "--filepath", FILE_PATH, "-b", QUERY_AET, ">", "nohup.out", "&"])
 
         logging.info('Started DCM4CHE successfully..')
 

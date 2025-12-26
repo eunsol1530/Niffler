@@ -225,7 +225,7 @@ def extract_images(filedata, i, png_destination, flattened_to_level, failed, is1
 
         if flattened_to_level == 'patient':
             ID = filedata.iloc[i].loc['PatientID']  # Unique identifier for the Patient.
-            folderName = hashlib.sha224(ID.encode('utf-8')).hexdigest()
+            folderName = hashlib.sha256(ID.encode('utf-8')).hexdigest()
             # check for existence of patient folder. Create if it does not exist.
             os.makedirs(png_destination + folderName, exist_ok=True)
         elif flattened_to_level == 'study':
@@ -234,8 +234,8 @@ def extract_images(filedata, i, png_destination, flattened_to_level, failed, is1
                 ID2 = filedata.iloc[i].loc['StudyInstanceUID']  # Unique identifier for the Study.
             except:
                 ID2 = 'ALL-STUDIES'
-            folderName = hashlib.sha224(ID1.encode('utf-8')).hexdigest() + "/" + \
-                         hashlib.sha224(ID2.encode('utf-8')).hexdigest()
+            folderName = hashlib.sha256(ID1.encode('utf-8')).hexdigest() + "/" + \
+                         hashlib.sha256(ID2.encode('utf-8')).hexdigest()
             # check for existence of the folder tree patient/study/series. Create if it does not exist.
             os.makedirs(png_destination + folderName, exist_ok=True)
         else:
@@ -246,15 +246,15 @@ def extract_images(filedata, i, png_destination, flattened_to_level, failed, is1
             except:
                 ID2 = 'ALL-STUDIES'
                 ID3 = 'ALL-SERIES'
-            folderName = hashlib.sha224(ID1.encode('utf-8')).hexdigest() + "/" + \
-                         hashlib.sha224(ID2.encode('utf-8')).hexdigest() + "/" + \
-                         hashlib.sha224(ID3.encode('utf-8')).hexdigest()
+            folderName = hashlib.sha256(ID1.encode('utf-8')).hexdigest() + "/" + \
+                         hashlib.sha256(ID2.encode('utf-8')).hexdigest() + "/" + \
+                         hashlib.sha256(ID3.encode('utf-8')).hexdigest()
             # check for existence of the folder tree patient/study/series. Create if it does not exist.
             os.makedirs(png_destination + folderName, exist_ok=True)
 
-        pngfile = png_destination + folderName + '/' + hashlib.sha224(imName.encode('utf-8')).hexdigest() + '.png'
+        pngfile = png_destination + folderName + '/' + hashlib.sha256(imName.encode('utf-8')).hexdigest() + '.png'
         dicom_path = filedata.iloc[i].loc['file']
-        image_path = png_destination + folderName + '/' + hashlib.sha224(imName.encode('utf-8')).hexdigest() + '.png'
+        image_path = png_destination + folderName + '/' + hashlib.sha256(imName.encode('utf-8')).hexdigest() + '.png'
         isRGB = filedata.iloc[i].loc['PhotometricInterpretation'] == 'RGB'
         if is16Bit:
             # write the PNG file as a 16-bit greyscale 
@@ -543,8 +543,8 @@ def execute(pickle_file, dicom_home, output_directory, print_images, print_only_
     merged_maps.to_csv('{}/mapping.csv'.format(output_directory), index=False)
 
     if send_email:
-        subprocess.call('echo "Niffler has successfully completed the png conversion" | mail -s "The image conversion'
-                        ' has been complete" {0}'.format(email), shell=True)
+        subprocess.call(['echo', 'Niffler has successfully completed the png conversion', '|', 'mail', '-s', 
+                         'The image conversion has been complete', email])
     # Record the total run-time
     logging.info('Total run time: %s %s', time.time() - t_start, ' seconds!')
     logging.shutdown()  # Closing logging file after extraction is done !!

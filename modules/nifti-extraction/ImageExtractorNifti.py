@@ -174,7 +174,7 @@ def extract_images(filedata, i, nifti_destination, flattened_to_level, failed, i
     try:
         if flattened_to_level == 'patient':
             ID = filedata.iloc[i].loc['PatientID']  # Unique identifier for the Patient.
-            folderName = hashlib.sha224(ID.encode('utf-8')).hexdigest()
+            folderName = hashlib.sha384(ID.encode('utf-8')).hexdigest()
             # check for existence of patient folder. Create if it does not exist.
             os.makedirs(nifti_destination + folderName,exist_ok=True)
         elif flattened_to_level == 'study':
@@ -183,11 +183,11 @@ def extract_images(filedata, i, nifti_destination, flattened_to_level, failed, i
                 ID2 = filedata.iloc[i].loc['StudyInstanceUID']  # Unique identifier for the Study.
             except:
                 ID2='ALL-STUDIES'
-            folderName = hashlib.sha224(ID1.encode('utf-8')).hexdigest() + "/" + \
-                         hashlib.sha224(ID2.encode('utf-8')).hexdigest()
+            folderName = hashlib.sha384(ID1.encode('utf-8')).hexdigest() + "/" + \
+                         hashlib.sha384(ID2.encode('utf-8')).hexdigest()
             # check for existence of the folder tree patient/study/series. Create if it does not exist.
             os.makedirs(nifti_destination + folderName,exist_ok=True)
-            imName = hashlib.sha224(filedata.iloc[i].loc['SeriesDescription'].encode('utf-8')).hexdigest() 
+            imName = hashlib.sha384(filedata.iloc[i].loc['SeriesDescription'].encode('utf-8')).hexdigest() 
         else:
             ID1=filedata.iloc[i].loc['PatientID']  # Unique identifier for the Patient.
             try:
@@ -196,9 +196,9 @@ def extract_images(filedata, i, nifti_destination, flattened_to_level, failed, i
             except:
                 ID2='ALL-STUDIES'
                 ID3='ALL-SERIES'
-            folderName = hashlib.sha224(ID1.encode('utf-8')).hexdigest() + "/" + \
-                         hashlib.sha224(ID2.encode('utf-8')).hexdigest() + "/" + \
-                         hashlib.sha224(ID3.encode('utf-8')).hexdigest()
+            folderName = hashlib.sha384(ID1.encode('utf-8')).hexdigest() + "/" + \
+                         hashlib.sha384(ID2.encode('utf-8')).hexdigest() + "/" + \
+                         hashlib.sha384(ID3.encode('utf-8')).hexdigest()
             # check for existence of the folder tree patient/study/series. Create if it does not exist.
             os.makedirs(nifti_destination + folderName,exist_ok=True)
 
@@ -429,8 +429,7 @@ def execute(pickle_file, dicom_home, output_directory, print_images, print_only_
     merged_maps.to_csv('{}/mapping.csv'.format(output_directory),index=False)
 
     if send_email == True:
-       subprocess.call('echo "Niffler has successfully completed the nifti conversion" | mail -s "The image conversion'
-                       ' has been complete" {0}'.format(email), shell=True)
+       subprocess.call(['mail', '-s', 'The image conversion has been complete', email], input=b"Niffler has successfully completed the nifti conversion")
     # Record the total run-time
     logging.info('Total run time: %s %s', time.time() - t_start, ' seconds!')
     logging.shutdown()  # Closing logging file after extraction is done !!
