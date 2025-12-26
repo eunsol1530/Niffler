@@ -86,16 +86,15 @@ def initialize_config_and_execute(valuesDict):
     temp_folder = os.path.join(storage_folder, "cfind-temp")
 
     if file_path == cfind_only:
-        cfind_add = '-r StudyDescription -x description.csv.xsl'
+        cfind_add = ['-r', 'StudyDescription', '-x', 'description.csv.xsl']
         out_folder = temp_folder
     elif file_path == cfind_detailed:
-        cfind_add = '-r StudyDescription -r StudyDate -r StudyTime -r DeviceSerialNumber ' \
-                    '-r ProtocolName -r PerformedProcedureStepDescription -r NumberOfStudyRelatedSeries ' \
-                    '-r NumberOfStudyRelatedInstances -r AcquisitionDate ' \
-                    '-x detailed.csv.xsl'
+        cfind_add = ['-r', 'StudyDescription', '-r', 'StudyDate', '-r', 'StudyTime', '-r', 'DeviceSerialNumber',
+                     '-r', 'ProtocolName', '-r', 'PerformedProcedureStepDescription', '-r', 'NumberOfStudyRelatedSeries',
+                     '-r', 'NumberOfStudyRelatedInstances', '-r', 'AcquisitionDate', '-x', 'detailed.csv.xsl']
         out_folder = temp_folder
     else:
-        cfind_add = ' -x stid.csv.xsl '
+        cfind_add = ['-x', 'stid.csv.xsl']
         out_folder = '.'
 
     niffler_log = 'niffler' + str(NIFFLER_ID) + '.log'
@@ -179,8 +178,8 @@ def initialize():
             datetime.datetime.now()))
 
         if not file_path == cfind_only and not file_path == cfind_detailed:
-            subprocess.call("{0}/storescp --accept-unknown --directory {1} --filepath {2} -b {3} > storescp.out &".format(
-                DCM4CHE_BIN, storage_folder, file_path, QUERY_AET), shell=True)
+            subprocess.call([os.path.join(DCM4CHE_BIN, 'storescp'), '--accept-unknown', '--directory', storage_folder,
+                             '--filepath', file_path, '-b', QUERY_AET, '>', 'storescp.out', '&'], shell=True)
 
     else:
         logging.info("{0}: This is an external AE. StoreScp will be started externally".format(datetime.datetime.now()))
@@ -314,12 +313,12 @@ def retrieve():
                 if (not resume) or (resume and (patient not in extracted_ones)):
                     if file_path == cfind_only or file_path == cfind_detailed:
                         temp_file = generate_temp_file_name()
-                        subprocess.call("{0}/findscu -c {1} -b {2} -M PatientRoot -m PatientID={3} -r AccessionNumber "
-                                        "-r StudyInstanceUID {4} --out-cat --out-file {5} --out-dir {6}".format(
-                            DCM4CHE_BIN, SRC_AET, QUERY_AET, patient, cfind_add, temp_file, out_folder), shell=True)
+                        subprocess.call([os.path.join(DCM4CHE_BIN, 'findscu'), '-c', SRC_AET, '-b', QUERY_AET, '-M', 'PatientRoot',
+                                         '-m', f'PatientID={patient}', '-r', 'AccessionNumber', '-r', 'StudyInstanceUID'] + cfind_add +
+                                        ['--out-cat', '--out-file', temp_file, '--out-dir', out_folder])
                     else:
-                        subprocess.call("{0}/movescu -c {1} -b {2} -M PatientRoot -m PatientID={3} --dest {4}".format(
-                            DCM4CHE_BIN, SRC_AET, QUERY_AET, patient, DEST_AET), shell=True)
+                        subprocess.call([os.path.join(DCM4CHE_BIN, 'movescu'), '-c', SRC_AET, '-b', QUERY_AET, '-M', 'PatientRoot',
+                                         '-m', f'PatientID={patient}', '--dest', DEST_AET])
                     extracted_ones.append(patient)
             merge_temp_files()
 
@@ -330,9 +329,9 @@ def retrieve():
                 sleep_for_nightly_mode()
                 first = firsts[pid]
                 temp_file = generate_temp_file_name()
-                subprocess.call("{0}/findscu -c {1} -b {2} -m {3}={4} -r PatientID -r StudyInstanceUID {5} "
-                                " --out-cat --out-file {6} --out-dir {7}".format(
-                    DCM4CHE_BIN, SRC_AET, QUERY_AET, first_attr, first, cfind_add, temp_file, out_folder), shell=True)
+                subprocess.call([os.path.join(DCM4CHE_BIN, 'findscu'), '-c', SRC_AET, '-b', QUERY_AET, '-m', f'{first_attr}={first}',
+                                 '-r', 'PatientID', '-r', 'StudyInstanceUID'] + cfind_add +
+                                ['--out-cat', '--out-file', temp_file, '--out-dir', out_folder])
                 if not (file_path == cfind_only or file_path == cfind_detailed):
                     extract_empi_study()
             merge_temp_files()
@@ -372,14 +371,12 @@ def retrieve():
                 if (not resume) or (resume and (temp_id not in extracted_ones)):
                     if file_path == cfind_only or file_path == cfind_detailed:
                         temp_file = generate_temp_file_name()
-                        subprocess.call("{0}/findscu -c {1} -b {2} -M PatientRoot -m PatientID={3} "
-                                        "-m AccessionNumber={4} -r StudyInstanceUID {5} --out-cat --out-file {6} "
-                                        "--out-dir {7}".format(DCM4CHE_BIN, SRC_AET, QUERY_AET, patient, accession,
-                                                             cfind_add, temp_file, out_folder), shell=True)
+                        subprocess.call([os.path.join(DCM4CHE_BIN, 'findscu'), '-c', SRC_AET, '-b', QUERY_AET, '-M', 'PatientRoot',
+                                         '-m', f'PatientID={patient}', '-m', f'AccessionNumber={accession}', '-r', 'StudyInstanceUID'] +
+                                        cfind_add + ['--out-cat', '--out-file', temp_file, '--out-dir', out_folder])
                     else:
-                        subprocess.call("{0}/movescu -c {1} -b {2} -M PatientRoot -m PatientID={3} "
-                                        "-m AccessionNumber={4} --dest {5}".format(DCM4CHE_BIN, SRC_AET, QUERY_AET,
-                                                                                   patient, accession, DEST_AET), shell=True)
+                        subprocess.call([os.path.join(DCM4CHE_BIN, 'movescu'), '-c', SRC_AET, '-b', QUERY_AET, '-M', 'PatientRoot',
+                                         '-m', f'PatientID={patient}', '-m', f'AccessionNumber={accession}', '--dest', DEST_AET])
                     extracted_ones.append(temp_id)
             merge_temp_files()
 
@@ -392,14 +389,12 @@ def retrieve():
                 if (not resume) or (resume and (temp_id not in extracted_ones)):
                     if file_path == cfind_only or file_path == cfind_detailed:
                         temp_file = generate_temp_file_name()
-                        subprocess.call("{0}/findscu -c {1} -b {2} -M PatientRoot -m PatientID={3} "
-                                        "-m StudyInstanceUID={4} -r AccessionNumber {5} --out-cat --out-file {6} "
-                                        "--out-dir {7}".format(DCM4CHE_BIN, SRC_AET, QUERY_AET, patient, study,
-                                                               cfind_add, temp_file, out_folder), shell=True)
+                        subprocess.call([os.path.join(DCM4CHE_BIN, 'findscu'), '-c', SRC_AET, '-b', QUERY_AET, '-M', 'PatientRoot',
+                                         '-m', f'PatientID={patient}', '-m', f'StudyInstanceUID={study}', '-r', 'AccessionNumber'] +
+                                        cfind_add + ['--out-cat', '--out-file', temp_file, '--out-dir', out_folder])
                     else:
-                        subprocess.call("{0}/movescu -c {1} -b {2} -m PatientID={3} -m StudyInstanceUID={4} "
-                                        "--dest {5}".format(DCM4CHE_BIN, SRC_AET, QUERY_AET, patient, study,
-                                                            DEST_AET), shell=True)
+                        subprocess.call([os.path.join(DCM4CHE_BIN, 'movescu'), '-c', SRC_AET, '-b', QUERY_AET,
+                                         '-m', f'PatientID={patient}', '-m', f'StudyInstanceUID={study}', '--dest', DEST_AET])
                     extracted_ones.append(temp_id)
             merge_temp_files()
 
@@ -411,11 +406,9 @@ def retrieve():
                 first = firsts[pid]
                 second = seconds[pid]
                 temp_file = generate_temp_file_name()
-                subprocess.call("{0}/findscu -c {1} -b {2} -m {3}={4} -m {5}={6} -r PatientID -r StudyInstanceUID {7} "
-                                "--out-cat --out-file {8} --out-dir {9}".format(DCM4CHE_BIN, SRC_AET, QUERY_AET,
-                                                                              first_attr, first, second_attr, second,
-                                                                              cfind_add, temp_file, out_folder),
-                                shell=True)
+                subprocess.call([os.path.join(DCM4CHE_BIN, 'findscu'), '-c', SRC_AET, '-b', QUERY_AET, '-m', f'{first_attr}={first}',
+                                 '-m', f'{second_attr}={second}', '-r', 'PatientID', '-r', 'StudyInstanceUID'] + cfind_add +
+                                ['--out-cat', '--out-file', temp_file, '--out-dir', out_folder])
                 if not (file_path == cfind_only or file_path == cfind_detailed):
                     extract_empi_study()
             merge_temp_files()
@@ -428,10 +421,9 @@ def retrieve():
             second = seconds[pid]
             third = thirds[pid]
             temp_file = generate_temp_file_name()
-            subprocess.call("{0}/findscu -c {1} -b {2} -m {3}={4} -m {5}={6} -m {7}={8} -r PatientID -r "
-                            "StudyInstanceUID {9} --out-cat --out-file {10} --out-dir {11}".format(
-                DCM4CHE_BIN, SRC_AET, QUERY_AET, first_attr, first, second_attr, second, third_attr, third, cfind_add,
-                temp_file, out_folder), shell=True)
+            subprocess.call([os.path.join(DCM4CHE_BIN, 'findscu'), '-c', SRC_AET, '-b', QUERY_AET, '-m', f'{first_attr}={first}',
+                             '-m', f'{second_attr}={second}', '-m', f'{third_attr}={third}', '-r', 'PatientID', '-r',
+                             'StudyInstanceUID'] + cfind_add + ['--out-cat', '--out-file', temp_file, '--out-dir', out_folder])
             if not (file_path == cfind_only or file_path == cfind_detailed):
                 extract_empi_study()
         merge_temp_files()
@@ -440,8 +432,8 @@ def retrieve():
     check_kill_process() 
 
     if send_email:
-        subprocess.call('echo "Niffler has successfully completed the DICOM retrieval" | mail -s "The DICOM retrieval '
-                        'has been complete" {0}'.format(email), shell=True)
+        subprocess.call(['echo', '"Niffler has successfully completed the DICOM retrieval"', '|', 'mail', '-s',
+                         '"The DICOM retrieval has been complete"', email], shell=True)
 
     # Record the total run-time
     logging.info('Total run time: %s %s', time.time() - t_start, ' seconds!')
@@ -507,8 +499,8 @@ def extract_empi_study():
             patient = patients2[pid2]
             temp_id = patient + SEPARATOR + study
             if (not resume) or (resume and (temp_id not in extracted_ones)):
-                subprocess.call("{0}/movescu -c {1} -b {2} -m PatientID={3} -m StudyInstanceUID={4} --dest {5}".
-                                format(DCM4CHE_BIN, SRC_AET, QUERY_AET, patient, study, DEST_AET), shell=True)
+                subprocess.call([os.path.join(DCM4CHE_BIN, 'movescu'), '-c', SRC_AET, '-b', QUERY_AET,
+                                 '-m', f'PatientID={patient}', '-m', f'StudyInstanceUID={study}', '--dest', DEST_AET])
                 extracted_ones.append(temp_id)
 
     except IOError:

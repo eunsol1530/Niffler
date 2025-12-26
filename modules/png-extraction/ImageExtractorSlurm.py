@@ -135,7 +135,7 @@ def extract_images(i):
     try:
         im=ds.pixel_array #pull image from read dicom
         ID=filedata.iloc[i].loc['PatientID'] #get patientID ex: BAC_00040
-        folderName = hashlib.sha224(ID.encode('utf-8')).hexdigest()
+        folderName = hashlib.sha256(ID.encode('utf-8')).hexdigest()  # Updated to use SHA-256
     
         imName=os.path.split(filedata.iloc[i].loc['file'])[1][:-4] #get file name ex: IM-0107-0022
         #check for existence of patient folder, create if needed
@@ -337,7 +337,7 @@ fm.close()
 # add this: error_msg = str(count) + ' out of ' + str(len(filelist)) + ' dicom images have failed extraction.')
 
 if send_email:
-    subprocess.call('echo "Niffler has successfully completed the png conversion" | mail -s "The image conversion has been complete" {0}'.format(email), shell=True)
+    subprocess.call(['echo', 'Niffler has successfully completed the png conversion', '|', 'mail', '-s', 'The image conversion has been complete', email], shell=False)
 
 # Record the total run-time
 logging.info('Total run time: %s %s', time.time() - t_start, ' seconds!')
